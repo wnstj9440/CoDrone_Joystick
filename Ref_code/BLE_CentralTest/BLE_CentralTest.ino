@@ -27,6 +27,8 @@ BLE           ble;
 static uint8_t service1_chars2[]  = {0x71, 0x3D, 0, 3, 0x50, 0x3E, 0x4C, 0x75, 0xBA, 0x94, 0x31, 0x48, 0xF1, 0x8D, 0x94, 0x1E};
 static uint8_t service1_chars3[]  = {0x71, 0x3D, 0, 4, 0x50, 0x3E, 0x4C, 0x75, 0xBA, 0x94, 0x31, 0x48, 0xF1, 0x8D, 0x94, 0x1E};
 
+static uint8_t test_chars[]  = {0x02, 0x4B, 0x78, 0x22, 0xCE, 0xCB, 0x83, 0x9D, 0xD5, 0x4A, 0xBC, 0x9F, 0x87, 0x1F, 0x11, 0xFA};
+
 UUID service_uuid(0x180D);
 UUID chars_uuid1(0x2A37);
 UUID chars_uuid2(service1_chars2);
@@ -279,44 +281,74 @@ static void discoveredServiceCallBack(const DiscoveredService *service) {
  *                     chars->getLastHandle()  characteristic's last attribute handle
  */
 static void discoveredCharacteristicCallBack(const DiscoveredCharacteristic *chars) {
-  Serial.println("\r\n----Characteristic Discovered");
-  Serial.print("Chars UUID type        : ");
-  Serial.println(chars->getUUID().shortOrLong(), HEX);// 0 16bit_uuid, 1 128bit_uuid
-  Serial.print("Chars UUID             : ");
-  if(chars->getUUID().shortOrLong() == UUID::UUID_TYPE_SHORT) {
+  uint8_t index;
+  const uint8_t *uuid = chars->getUUID().getBaseUUID();
+
+  for (index = 0; index < 16; index++) {
+    Serial.print(uuid[index], HEX);
+    Serial.print(" ");
+  }
+
+  if ( memcmp(uuid, test_chars, sizeof(test_chars)) == 0x00 ) {
+    uint16_t value = 0x0909;
+    //    ble.gattClient().read(chars->getConnHandle(), chars->getValueHandle(), 0);
+    ble.gattClient().write(GattClient::GATT_OP_WRITE_CMD, chars->getConnectionHandle(), chars->getValueHandle(), 2, (uint8_t *)&value);
+    Serial.println("found");
+    delay(15000);
+    
+    value = 0x1010;
+    ble.gattClient().write(GattClient::GATT_OP_WRITE_CMD, chars->getConnectionHandle(), chars->getValueHandle(), 2, (uint8_t *)&value);
+    Serial.println("found 2");
+    
+        while(1){
+          Serial.println("found");
+          delay(10);
+        }
+    
+  }
+
+  /*
+    Serial.println("\r\n----Characteristic Discovered");
+    Serial.print("Chars UUID type        : ");
+    Serial.println(chars->getUUID().shortOrLong(), HEX);// 0 16bit_uuid, 1 128bit_uuid
+    Serial.print("Chars UUID             : ");
+
+
+    if(chars->getUUID().shortOrLong() == UUID::UUID_TYPE_SHORT) {
     Serial.println(chars->getUUID().getShortUUID(), HEX);
     if(chars->getUUID().getShortUUID() == 0x2A37) {
       Serial.println("Found HRM characteristic ");
       characteristic_is_fond = 1;
       chars_hrm = *chars;
     }
-  }
-  else {
+    }
+    else {
     uint8_t index;
     const uint8_t *uuid = chars->getUUID().getBaseUUID();
     for(index=0; index<16; index++) {
+      Serial.println("TYPE_NOT_SHORT");
       Serial.print(uuid[index], HEX);
       Serial.print(" ");
     }
     Serial.println(" ");
-  }
+    }
 
-  Serial.print("properties_read        : ");
-  Serial.println(chars->getProperties().read(), DEC);
-  Serial.print("properties_writeWoResp : ");
-  Serial.println(chars->getProperties().writeWoResp(), DEC);
-  Serial.print("properties_write       : ");
-  Serial.println(chars->getProperties().write(), DEC);
-  Serial.print("properties_notify      : ");
-  Serial.println(chars->getProperties().notify(), DEC);
+    Serial.print("properties_read        : ");
+    Serial.println(chars->getProperties().read(), DEC);
+    Serial.print("properties_writeWoResp : ");
+    Serial.println(chars->getProperties().writeWoResp(), DEC);
+    Serial.print("properties_write       : ");
+    Serial.println(chars->getProperties().write(), DEC);
+    Serial.print("properties_notify      : ");
+    Serial.println(chars->getProperties().notify(), DEC);
 
-  Serial.print("declHandle             : ");
-  Serial.println(chars->getDeclHandle(), HEX);
-  Serial.print("valueHandle            : ");
-  Serial.println(chars->getValueHandle(), HEX);
-  Serial.print("lastHandle             : ");
-  Serial.println(chars->getLastHandle(), HEX);
-
+    Serial.print("declHandle             : ");
+    Serial.println(chars->getDeclHandle(), HEX);
+    Serial.print("valueHandle            : ");
+    Serial.println(chars->getValueHandle(), HEX);
+    Serial.print("lastHandle             : ");
+    Serial.println(chars->getLastHandle(), HEX);
+  */
   //uint16_t value = 0x0001;
   //ble.gattClient().read(chars->getConnHandle(), chars->getValueHandle(), 0);
   //ble.gattClient().write(GattClient::GATT_OP_WRITE_CMD,chars->getConnHandle(),chars->getValueHandle(),2,(uint8_t *)&value);
