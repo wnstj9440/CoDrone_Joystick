@@ -174,7 +174,7 @@ static void scanCallBack(const Gap::AdvertisementCallbackParams_t *params) {
     Serial.print("Complete name is : ");
     Serial.println((const char*)adv_name);
 
-    if(memcmp("test", adv_name, 4) == 0x00) {
+    if(memcmp("test", adv_name, 7) == 0x00) {
       Serial.println("Got device, stop scan ");
       ble.stopScan();
       device_is_simple_peripheral = 1;
