@@ -19,6 +19,14 @@
  *        If connecting to "BLE_simplePeripheral, will discovery all services and characteristics
  */
 #include <nRF5x_BLE_API.h>
+#include <Wire.h>
+
+#define I2C_ADDRESS       41    // I2C Address of USB Host
+#define PS4_READ_INTERVAL 20    // Read every 20ms
+#include "ps4_i2c.h"            // Include ps4_i2c.h if using I2C 
+
+
+
 
 BLE           ble;
 
@@ -315,8 +323,30 @@ static void discoveredCharacteristicCallBack(const DiscoveredCharacteristic *cha
 
   if ( memcmp(uuid, test_chars, sizeof(test_chars)) == 0x00 ) {
     //uint16_t value = 0x0909;
-    unsigned char value[3];
+    int8_t value[5];
 
+
+    value[0] = 0x10;
+    value[1] = 0x00;
+    value[2] = 0x00;
+    value[3] = 0x00;
+    
+    while(1){ //main loop
+
+      get_ps4();
+  
+      if(ps4_ok==1){    
+        Serial.println(ps4.l_joystick_y);
+        ps4_ok=0; 
+
+        value[4] = map(ps4.l_joystick_y, 0 ,255, -100, 100);
+        ble.gattClient().write(GattClient::GATT_OP_WRITE_CMD, chars->getConnectionHandle(), chars->getValueHandle(), sizeof(value), /*(uint8_t *)*/ (uint8_t *)value);
+      } 
+
+       
+      delay(100);
+    }
+/*
     value[0] = 0x11;
     value[1] = 0x22;
     value[2] = 0x01;
@@ -338,7 +368,7 @@ static void discoveredCharacteristicCallBack(const DiscoveredCharacteristic *cha
     
     ble.gattClient().write(GattClient::GATT_OP_WRITE_CMD, chars->getConnectionHandle(), chars->getValueHandle(), 3, (uint8_t *)&value);
     Serial.println("found 2");
-
+*/
     
   }
 
@@ -500,8 +530,9 @@ void hvxCallBack(const GattHVXCallbackParams *params) {
 
 void setup() {
   // put your setup code here, to run once:
-  Serial.begin(115200);
+  Serial.begin(9600);
   Serial.println("BLE Central Demo ");
+  Wire.begin();
 
   ble.init();
   ble.onConnection(connectionCallBack);
